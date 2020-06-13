@@ -1,5 +1,5 @@
-import { compose, tap, prop } from './utils.js';
-import { initialState, next, BOARD_DIMENSIONS, changeMove, MOVES } from './snake.js';
+import { compose, tap, prop, last, toArray, dropLast, id, branch } from './utils.js';
+import { initialState, next, BOARD_DIMENSIONS, changeMove, MOVES, isGameOver } from './snake.js';
 
 const FRAME_TIME = 150;
 const SLOT = [20, 20];
@@ -9,7 +9,9 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 [ canvas.width, canvas.height ] = CANVAS_SIZE;
 
-
+const headColor = '#2B9E38';
+const bodyColor = '#45B528';
+const appleColor = 'red';
 
 function draw(color) {
     return function squares(positions) {
@@ -20,38 +22,59 @@ function draw(color) {
     }
 }
 
+function drawCrash() {
+    clearCanvas();
+    ctx.fillStyle = 'red';
+    ctx.fillRect(0,0, canvas.width, canvas.width);
+}
+
 function clearCanvas() {
     ctx.clearRect(0,0, canvas.width, canvas.width);
 }
 
-const drawFrame = compose(
-    tap(compose(
-        draw('red'),
-        prop('apples')
-    )),
-    tap(compose(
-        draw('green'),
-        prop('snake')
-    )),
-    tap(clearCanvas)
+const drawFrame = branch(
+    isGameOver,
+    drawCrash,
+    compose(
+        tap(compose(
+            draw(appleColor),
+            prop('apples')
+        )),
+        tap(compose(
+            draw(headColor),
+            toArray,
+            last,
+            prop('snake')
+        )),
+        tap(compose(
+            draw(bodyColor),
+            dropLast,
+            prop('snake')
+        )),
+        tap(clearCanvas)
+    )
 );
 
-
-
 let state = initialState();
+let paused = false;
 const frame = (t1) => (t2) => {
-    if (t2 - t1 > FRAME_TIME) {
-        // console.log('different frame')
+    if (!paused && t2 - t1 > FRAME_TIME) {
         state = next(state);
         drawFrame(state);
+        if (isGameOver(state)) {
+            paused = true;
+            setTimeout(() => paused = false, 2000)
+            state = initialState();
+        }
         window.requestAnimationFrame(frame(t2));
     } else {
-        // console.log('same frame')
         window.requestAnimationFrame(frame(t1));
     }
 }
 
 function keyUpEventListener(event) {
+    if (paused) return;
+
     let fn;
     switch (event.key) {
         case 'ArrowUp':
@@ -66,11 +89,12 @@ function keyUpEventListener(event) {
         case 'ArrowLeft':
             fn = changeMove(MOVES.LEFT);
             break;
+        case 'p':
+            fn = id;
+            paused = !paused;
+            break;
         default:
-            fn = compose(
-                changeMove,
-                prop('move')
-            )(state);
+            fn = id;
             break;
     }
     state = fn(state)

@@ -10,39 +10,36 @@ import {
     prop,
     randomInt,
     last,
-    log,
     push,
     branch,
+    isEmptyArray,
+    id,
 } from './utils.js';
 
 export const BOARD_DIMENSIONS = [40, 20];
-
-const snake = prop('snake');
-const apples = prop('apples');
-const move = prop('move');
-const backToBoard = modPoint(BOARD_DIMENSIONS[0], BOARD_DIMENSIONS[1])
-
 export const MOVES = {
     UP: [0, -1],
     RIGHT: [1, 0],
     DOWN: [0, 1],
     LEFT: [-1, 0],
-}
-
-
-const randomInBoard = () => [
-    randomInt(BOARD_DIMENSIONS[0]),
-    randomInt(BOARD_DIMENSIONS[1])
-];
-
-
+};
 export const initialState = () => ({
     snake: [[0,0]],
-    apples: [randomInBoard()],
+    apples: spawnApple(),
     move: MOVES.RIGHT,
 });
 
-export const nextHead = compose(
+const snake = prop('snake');
+const apples = prop('apples');
+const move = prop('move');
+const backToBoard = modPoint(BOARD_DIMENSIONS[0], BOARD_DIMENSIONS[1]);
+const randomInBoard = () => [
+    randomInt(0, BOARD_DIMENSIONS[0] - 1),
+    randomInt(0, BOARD_DIMENSIONS[1] - 1)
+];
+const spawnApple = () => [randomInBoard()];
+
+const nextHead = compose(
     backToBoard,
     gather(
         addPoints,
@@ -54,16 +51,19 @@ export const nextHead = compose(
     )
 );
 
-const willEat = compose(
-    log('will eat', Boolean),
-    gather(
-        includesPoint,
-        prop('apples'),
-        nextHead,
-    ),
+const willCrash = gather(
+    includesPoint,
+    snake,
+    nextHead,
 );
 
-export const growSnake = gather(
+const willEat = gather(
+    includesPoint,
+    apples,
+    nextHead,
+);
+
+const growSnake = gather(
     push,
     snake,
     nextHead,
@@ -74,32 +74,51 @@ const moveSnake = compose(
     growSnake,
 );
 
+const emptySnake = constant([]);
+
 const nextSnake = branch(
-    willEat,
-    growSnake,
-    moveSnake,
+    willCrash,
+    emptySnake,
+    branch(
+        willEat,
+        growSnake,
+        moveSnake,
+    ),
 );
 
 const nextApple = branch(
     willEat,
-    compose(
-        () => [randomInBoard()],
-        log('nextApple random'),
-    ),
-    compose(
-        apples,
-        log('nextApple repeat'),
-    ),
+    spawnApple,
+    apples,
 );
 
-export const next = applySpec({
-    snake: nextSnake,
-    apples: nextApple,
-    move,
-});
-
-export const changeMove = (direction = move.left) => applySpec({
+export const isGameOver = compose(
+    isEmptyArray,
     snake,
-    apples,
-    move: constant(direction),
-});
+);
+
+export const next = branch(
+    isGameOver,
+    id,
+    applySpec({
+        snake: nextSnake,
+        apples: nextApple,
+        move,
+    }),
+);
+
+const isValidMove = (currentMove) => (newMove) =>
+    currentMove[0] + newMove[0] !== 0 || currentMove[1] + newMove[1] !== 0;
+
+export const changeMove = (direction = move.left) => branch(
+    gather(
+        isValidMove,
+        move,
+        constant(direction),
+    ),
+    applySpec({
+        snake,
+        apples,
+        move: constant(direction),
+    }),
+);
