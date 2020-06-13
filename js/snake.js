@@ -9,7 +9,7 @@ import {
     modPoint,
     prop,
     randomInt,
-    first,
+    last,
     log,
     push,
     branch,
@@ -47,7 +47,7 @@ export const nextHead = compose(
     gather(
         addPoints,
         compose(
-            first,
+            last,
             snake
         ),
         move,
