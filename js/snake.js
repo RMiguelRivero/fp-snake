@@ -14,6 +14,7 @@ import {
     branch,
     isEmptyArray,
     id,
+    increment,
 } from './utils.js';
 
 export const BOARD_DIMENSIONS = [40, 20];
@@ -26,12 +27,14 @@ export const MOVES = {
 export const initialState = () => ({
     snake: [[0,0]],
     apples: spawnApple(),
+    score: 0,
     move: MOVES.RIGHT,
 });
 
 const snake = prop('snake');
 const apples = prop('apples');
 const move = prop('move');
+const score = prop('score');
 const backToBoard = modPoint(BOARD_DIMENSIONS[0], BOARD_DIMENSIONS[1]);
 const randomInBoard = () => [
     randomInt(0, BOARD_DIMENSIONS[0] - 1),
@@ -92,6 +95,15 @@ const nextApple = branch(
     apples,
 );
 
+const nextScore = branch(
+    willEat,
+    compose(
+        increment,
+        score,
+    ),
+    score,
+);
+
 export const isGameOver = compose(
     isEmptyArray,
     snake,
@@ -103,6 +115,7 @@ export const next = branch(
     applySpec({
         snake: nextSnake,
         apples: nextApple,
+        score: nextScore,
         move,
     }),
 );
@@ -119,6 +132,7 @@ export const changeMove = (direction = move.left) => branch(
     applySpec({
         snake,
         apples,
+        score,
         move: constant(direction),
     }),
 );

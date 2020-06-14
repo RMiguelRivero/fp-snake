@@ -19,6 +19,7 @@ const eqPoints = (p1) => (p2) => p1[0] === p2[0] && p1[1] === p2[1];
 export const includesPoint = (arr) => (p) => Boolean(arr.filter(eqPoints(p)).length);
 export const addPoints = (p1) => (p2) => [p1[0] + p2[0], p1[1] + p2[1]];
 
+export const increment = (n) => ++n;
 const mod = (m) => (x) => ((x % m) + m) % m;
 export const modPoint = (width, height) => (p) => [mod(width)(p[0]), mod(height)(p[1])];
 
