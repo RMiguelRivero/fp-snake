@@ -17,7 +17,7 @@ import {
     increment,
 } from './utils.js';
 
-export const BOARD_DIMENSIONS = [40, 20];
+export const BOARD_DIMENSIONS = [30, 20];
 export const MOVES = {
     UP: [0, -1],
     RIGHT: [1, 0],

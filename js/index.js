@@ -1,5 +1,6 @@
 import { compose, tap, prop, last, toArray, dropLast, id, branch } from './utils.js';
 import { initialState, next, BOARD_DIMENSIONS, changeMove, MOVES, isGameOver } from './snake.js';
+import { startTouchEvents, SWIPE, SWIPE_UP, SWIPE_DOWN, SWIPE_RIGHT, SWIPE_LEFT } from './swipe.js';
 
 const FRAME_TIME = 150;
 const SLOT = [20, 20];
@@ -13,6 +14,14 @@ const headColor = '#2B9E38';
 const bodyColor = '#45B528';
 const appleColor = 'red';
 
+const $body = document.querySelector('body');
+const $footer = document.querySelector('.footer');
+$footer.style.width = CANVAS_SIZE[0] + 'px';
+const $controls = document.querySelector('.controls');
+const $buttons = document.querySelectorAll('.controls .button');
+const $score = document.querySelector('.score');
+
+
 function draw(color) {
     return function squares(positions) {
         for( const p of positions) {
@@ -24,8 +33,14 @@ function draw(color) {
 
 function drawCrash() {
     clearCanvas();
-    ctx.fillStyle = 'red';
+    ctx.fillStyle = 'black';
     ctx.fillRect(0,0, canvas.width, canvas.width);
+
+    ctx.fillStyle = 'white';
+    ctx.font = '48px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Game Over', CANVAS_SIZE[0]/2, CANVAS_SIZE[1]/2);
 }
 
 function clearCanvas() {
@@ -55,16 +70,35 @@ const drawFrame = branch(
     )
 );
 
-let state = initialState();
+function startGame() {
+    let _state = initialState();
+    return {
+        get state () {
+            return _state;
+        },
+        set state(newState) {
+            if(newState.score !== _state.score) {
+                updateScoreHandler(newState.score);
+            }
+            _state = newState;
+        }
+    }
+}
+
+function updateScoreHandler(score) {
+    $score.innerHTML = score;
+}
+
+let game = startGame();
 let paused = false;
 const frame = (t1) => (t2) => {
     if (!paused && t2 - t1 > FRAME_TIME) {
-        state = next(state);
-        drawFrame(state);
-        if (isGameOver(state)) {
+        game.state = next(game.state);
+        drawFrame(game.state);
+        if (isGameOver(game.state)) {
             paused = true;
             setTimeout(() => paused = false, 2000)
-            state = initialState();
+            game.state = initialState();
         }
         window.requestAnimationFrame(frame(t2));
     } else {
@@ -72,33 +106,57 @@ const frame = (t1) => (t2) => {
     }
 }
 
-function keyUpEventListener(event) {
-    if (paused) return;
+function playPause(wrapper) {
+    return function playPauseHandler() {
+        paused = !paused;
+        if (paused) {
+            wrapper.classList.add('paused');
+        } else {
+            wrapper.classList.remove('paused');
+        }
+    }
+}
+
+function eventListener(event) {
+    if (paused && !['KeyP', 'Space'].includes(event.code)) return;
 
     let fn;
-    switch (event.key) {
+    const key = event.type === 'swipe'
+        ? event.detail
+        : event.code;
+    switch (key) {
         case 'ArrowUp':
+        case SWIPE_UP:
             fn = changeMove(MOVES.UP);
             break;
         case 'ArrowDown':
+        case SWIPE_DOWN:
             fn = changeMove(MOVES.DOWN);
             break;
         case 'ArrowRight':
+        case SWIPE_RIGHT:
             fn = changeMove(MOVES.RIGHT);
             break;
         case 'ArrowLeft':
+        case SWIPE_LEFT:
             fn = changeMove(MOVES.LEFT);
             break;
-        case 'p':
+        case 'KeyP':
+        case 'Space':
             fn = id;
-            paused = !paused;
+            playPause($controls)();
             break;
         default:
             fn = id;
             break;
     }
-    state = fn(state)
+    game.state = fn(game.state)
 }
 
-window.addEventListener('keydown', keyUpEventListener);
+window.addEventListener('keydown', eventListener);
+
+startTouchEvents($body);
+$body.addEventListener(SWIPE, eventListener);
+
 window.requestAnimationFrame(frame(0));
+$buttons.forEach(button => button.addEventListener('click', playPause($controls)));
