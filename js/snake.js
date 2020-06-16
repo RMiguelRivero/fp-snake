@@ -15,6 +15,9 @@ import {
     isEmptyArray,
     id,
     increment,
+    dropLast,
+    not,
+    diffPoints,
 } from './utils.js';
 
 export const BOARD_DIMENSIONS = [30, 20];
@@ -32,6 +35,16 @@ export const initialState = () => ({
 });
 
 const snake = prop('snake');
+const snakeHead = compose(last, snake);
+const snakeNeck = compose(
+    branch(
+        not,
+        () => [NaN, NaN],
+    ),
+    last,
+    dropLast,
+    snake,
+);
 const apples = prop('apples');
 const move = prop('move');
 const score = prop('score');
@@ -120,15 +133,18 @@ export const next = branch(
     }),
 );
 
-const isValidMove = (currentMove) => (newMove) =>
-    currentMove[0] + newMove[0] !== 0 || currentMove[1] + newMove[1] !== 0;
-
-export const changeMove = (direction = move.left) => branch(
+const isValidMove = (direction) => gather(
+    diffPoints,
     gather(
-        isValidMove,
-        move,
+        addPoints,
+        snakeHead,
         constant(direction),
     ),
+    snakeNeck,
+);
+
+export const changeMove = (direction) => branch(
+    isValidMove(direction),
     applySpec({
         snake,
         apples,
