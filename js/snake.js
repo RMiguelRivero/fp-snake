@@ -20,6 +20,10 @@ import {
     diffPoints,
 } from './utils.js';
 
+const randomInBoard = () => [
+    randomInt(0, BOARD_DIMENSIONS[0] - 1),
+    randomInt(0, BOARD_DIMENSIONS[1] - 1)
+];
 export const BOARD_DIMENSIONS = [30, 20];
 export const MOVES = {
     UP: [0, -1],
@@ -29,7 +33,7 @@ export const MOVES = {
 };
 export const initialState = () => ({
     snake: [[0,0]],
-    apples: spawnApple(),
+    apples: [randomInBoard()],
     score: 0,
     move: MOVES.RIGHT,
 });
@@ -49,11 +53,13 @@ const apples = prop('apples');
 const move = prop('move');
 const score = prop('score');
 const backToBoard = modPoint(BOARD_DIMENSIONS[0], BOARD_DIMENSIONS[1]);
-const randomInBoard = () => [
-    randomInt(0, BOARD_DIMENSIONS[0] - 1),
-    randomInt(0, BOARD_DIMENSIONS[1] - 1)
-];
-const spawnApple = () => [randomInBoard()];
+
+function spawnApple(state) {
+    let newApple = randomInBoard();
+    return includesPoint(state.snake)(newApple)
+        ? spawnApple(state)
+        : [newApple];
+};
 
 const nextHead = compose(
     backToBoard,
