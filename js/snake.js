@@ -18,7 +18,23 @@ import {
     dropLast,
     not,
     diffPoints,
+    tap,
 } from './utils.js';
+import { eat } from './sounds.js';
+
+
+const eatEvent = new CustomEvent('eat');
+const crashEvent = new CustomEvent('crash');
+let $zone;
+
+export function listeners(zone) {
+    $zone = zone
+}
+
+const emit = (event) => branch(
+    () => !!($zone),
+    tap(() => $zone.emit(event))
+);
 
 const randomInBoard = () => [
     randomInt(0, BOARD_DIMENSIONS[0] - 1),
@@ -115,7 +131,13 @@ const nextApple = branch(
 );
 
 const nextScore = branch(
-    willEat,
+    compose(
+        branch(
+            id,
+            emit(eat),
+        ),
+        willEat,
+    ),
     compose(
         increment,
         score,

@@ -10,7 +10,8 @@ h1 {
     padding: 0.5rem;
 }
 #canvas {
-    background-color: powderblue;
+    /* background-color: powderblue; */
+    background-color: #3ab577;
 }
 .content {
     display: flex;
@@ -24,16 +25,25 @@ h1 {
     align-items: center;
     padding: 1rem 0;
 }
-.controls {
+.controls, .resume {
     display: flex;
     flex-direction: row;
 }
-.controls .button {
-    min-width: 100px;
+.button {
     background: transparent;
     border: black solid 1px;
     border-radius: 5px;
     padding: 0.5rem;
+}
+.controls .button {
+    min-width: 50px;
+}
+.controls .button:not(:nth-last-child(1)) {
+    margin-right: 0.5rem;
+}
+.play, .pause {
+    min-width: 100px;
+    margin-left: 1rem;
 }
 .play {
     display: none;

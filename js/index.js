@@ -1,14 +1,15 @@
-import { compose, tap, prop, last, toArray, dropLast, id, branch } from './utils.js';
+import { compose, tap, prop, first, last, toArray, dropLast, id, branch, log } from './utils.js';
 import { initialState, next, BOARD_DIMENSIONS, changeMove, MOVES, isGameOver } from './snake.js';
 import { startTouchEvents, SWIPE, SWIPE_UP, SWIPE_DOWN, SWIPE_RIGHT, SWIPE_LEFT } from './swipe.js';
+import { Gru, Banana, getRandomMinion } from './images.js';
 
 const FRAME_TIME = 150;
 const SLOT = [20, 20];
 const CANVAS_SIZE = [BOARD_DIMENSIONS[0] * SLOT[0], BOARD_DIMENSIONS[1] * SLOT[1]];
 
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-[ canvas.width, canvas.height ] = CANVAS_SIZE;
+const $canvas = document.getElementById('canvas');
+const ctx = $canvas.getContext('2d');
+[ $canvas.width, $canvas.height ] = CANVAS_SIZE;
 
 const headColor = '#2B9E38';
 const bodyColor = '#45B528';
@@ -17,8 +18,8 @@ const appleColor = 'red';
 const $body = document.querySelector('body');
 const $footer = document.querySelector('.footer');
 $footer.style.width = CANVAS_SIZE[0] + 'px';
-const $controls = document.querySelector('.controls');
-const $buttons = document.querySelectorAll('.controls .button');
+const $resume = document.querySelector('.resume');
+const $buttons = document.querySelectorAll('.button');
 const $score = document.querySelector('.score');
 
 
@@ -31,10 +32,38 @@ function draw(color) {
     }
 }
 
+function playSound(snd) {
+    return function() {
+        snd.play();
+    }
+}
+
+function drawCharacter(character){
+    return function drawImage(p) {
+        ctx.drawImage(character, p[0]*SLOT[0], p[1]*SLOT[1], SLOT[0], SLOT[1]);
+    }
+}
+
+// function drawMinion()
+function enclosedMinions() {
+    const minionsQueue = [];
+    return function minions(positions) {
+        while (positions.length != minionsQueue.length) {
+            minionsQueue.unshift(getRandomMinion());
+        }
+        for (let i = 0; i < positions.length; i++) {
+            drawCharacter(minionsQueue[i])(positions[i]);
+        }
+    }
+}
+const drawMinions = enclosedMinions();
+const drawGru = drawCharacter(Gru);
+const drawBanana = drawCharacter(Banana);
+
 function drawCrash() {
     clearCanvas();
     ctx.fillStyle = 'black';
-    ctx.fillRect(0,0, canvas.width, canvas.width);
+    ctx.fillRect(0,0, $canvas.width, $canvas.width);
 
     ctx.fillStyle = 'white';
     ctx.font = '48px serif';
@@ -44,7 +73,7 @@ function drawCrash() {
 }
 
 function clearCanvas() {
-    ctx.clearRect(0,0, canvas.width, canvas.width);
+    ctx.clearRect(0,0, $canvas.width, $canvas.width);
 }
 
 const drawFrame = branch(
@@ -52,17 +81,20 @@ const drawFrame = branch(
     drawCrash,
     compose(
         tap(compose(
-            draw(appleColor),
+            // draw(appleColor),
+            drawBanana,
+            first,
             prop('apples')
         )),
         tap(compose(
-            draw(headColor),
-            toArray,
+            // draw(headColor),
+            // toArray,
+            drawGru,
             last,
             prop('snake')
         )),
         tap(compose(
-            draw(bodyColor),
+            drawMinions,
             dropLast,
             prop('snake')
         )),
@@ -107,44 +139,50 @@ const frame = (t1) => (t2) => {
 }
 
 function playPause(wrapper) {
-    return function playPauseHandler() {
-        paused = !paused;
-        if (paused) {
-            wrapper.classList.add('paused');
-        } else {
-            wrapper.classList.remove('paused');
-        }
+    paused = !paused;
+    if (paused) {
+        wrapper.classList.add('paused');
+    } else {
+        wrapper.classList.remove('paused');
     }
 }
 
 function eventListener(event) {
-    if (paused && !['KeyP', 'Space'].includes(event.code)) return;
-
+    const { type } = event
+    const key = type === 'click'
+        ? event.target.attributes['data-action'].value
+        : type === 'swipe'
+            ? event.detail
+            : event.code;
+    if (paused && !['KeyP', 'Space', 'play'].includes(key)) return;
     let fn;
-    const key = event.type === 'swipe'
-        ? event.detail
-        : event.code;
     switch (key) {
         case 'ArrowUp':
+        case 'up':
         case SWIPE_UP:
             fn = changeMove(MOVES.UP);
             break;
         case 'ArrowDown':
+        case 'down':
         case SWIPE_DOWN:
             fn = changeMove(MOVES.DOWN);
             break;
         case 'ArrowRight':
+        case 'right':
         case SWIPE_RIGHT:
             fn = changeMove(MOVES.RIGHT);
             break;
         case 'ArrowLeft':
+        case 'left':
         case SWIPE_LEFT:
             fn = changeMove(MOVES.LEFT);
             break;
         case 'KeyP':
         case 'Space':
+        case 'play':
+        case 'pause':
             fn = id;
-            playPause($controls)();
+            playPause($resume);
             break;
         default:
             fn = id;
@@ -153,10 +191,9 @@ function eventListener(event) {
     game.state = fn(game.state)
 }
 
+
 window.addEventListener('keydown', eventListener);
-
 startTouchEvents($body);
-$body.addEventListener(SWIPE, eventListener);
-
+$canvas.addEventListener(SWIPE, eventListener);
+$buttons.forEach((button) => button.addEventListener('click', eventListener));
 window.requestAnimationFrame(frame(0));
-$buttons.forEach(button => button.addEventListener('click', playPause($controls)));
