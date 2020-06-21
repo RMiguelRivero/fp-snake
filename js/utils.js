@@ -2,6 +2,8 @@ export const randomInt = (min = 0, max = 1) => Math.floor(Math.random() * (max -
 export const not = (x) => !x;
 
 export const id = (x) => x;
+export const True = () => true;
+export const False = () => false;
 export const compose = (...fns) => (x) => fns.reduceRight((acc, f) => f(acc), x);
 export const tap = (fn) => (obj) => (fn(obj), obj);
 export const log = (key, parse = id) => obj => (console.log({ [key]: parse(obj)}), obj);
@@ -11,7 +13,7 @@ export const last = (arr) => arr[arr.length - 1];
 export const first = (arr) => arr[0];
 export const dropFirst = (arr) => arr.slice(1);
 export const dropLast = (arr) => arr.slice(0, arr.length - 1);
-export const isEmptyArray = compose(not, Boolean, prop('length'));
+export const isEmptyArray = (arr) => !arr.length;
 export const push = (arr) => (x) => arr.concat([x]);
 export const toArray = (...args) => args;
 

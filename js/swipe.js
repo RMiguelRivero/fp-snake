@@ -47,22 +47,20 @@ function touchStartHandler(event) {
     touchstartX = event.changedTouches[0].screenX;
     touchstartY = event.changedTouches[0].screenY;
 }
+
 function touchEndHandler(event) {
     touchendX = event.changedTouches[0].screenX;
     touchendY = event.changedTouches[0].screenY;
     handleGesure();
 }
 
-
-
-
-export function startTouchEvents(node = document.querySelector('body')) {
+export function setUpSwipe(node = document.querySelector('body')) {
     $zone = node;
     $zone.addEventListener('touchstart', touchStartHandler, false);
     $zone.addEventListener('touchend', touchEndHandler, false);
 }
 
-export function endTouchEvents() {
+export function tearDownSwipe() {
     if (!$zone) return;
     $zone.removeEventListener(touchStartHandler);
     $zone.removeEventListener(touchEndHandler);

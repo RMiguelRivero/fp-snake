@@ -12,12 +12,13 @@ import {
     last,
     push,
     branch,
-    isEmptyArray,
     id,
     increment,
     dropLast,
     not,
     diffPoints,
+    True,
+    False,
 } from './utils.js';
 
 const randomInBoard = () => [
@@ -31,11 +32,13 @@ export const MOVES = {
     DOWN: [0, 1],
     LEFT: [-1, 0],
 };
+
 export const initialState = () => ({
     snake: [[0,0]],
     apples: [randomInBoard()],
     score: 0,
     move: MOVES.RIGHT,
+    gameOver: false,
 });
 
 const snake = prop('snake');
@@ -52,13 +55,16 @@ const snakeNeck = compose(
 const apples = prop('apples');
 const move = prop('move');
 const score = prop('score');
+const gameOver = prop('gameOver');
 const backToBoard = modPoint(BOARD_DIMENSIONS[0], BOARD_DIMENSIONS[1]);
 
-function spawnApple(state) {
+const spawnApple = (state) => {
     let newApple = randomInBoard();
-    return includesPoint(state.snake)(newApple)
-        ? spawnApple(state)
-        : [newApple];
+    const isInSnake = includesPoint(state.snake);
+    while(isInSnake(newApple)){
+        newApple = randomInBoard();
+    }
+    return [newApple];
 };
 
 const nextHead = compose(
@@ -123,19 +129,23 @@ const nextScore = branch(
     score,
 );
 
-export const isGameOver = compose(
-    isEmptyArray,
-    snake,
+export const nextGameOver = branch(
+    willCrash,
+    True,
+    False,
 );
+
+export const isGameOver = gameOver;
 
 export const next = branch(
     isGameOver,
-    id,
+    initialState,
     applySpec({
         snake: nextSnake,
         apples: nextApple,
         score: nextScore,
         move,
+        gameOver: nextGameOver,
     }),
 );
 
@@ -156,5 +166,6 @@ export const changeMove = (direction) => branch(
         apples,
         score,
         move: constant(direction),
+        gameOver,
     }),
 );
