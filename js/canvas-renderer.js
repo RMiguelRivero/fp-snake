@@ -11,12 +11,37 @@ const ctx = canvas.getContext('2d');
 const headColor = '#2B9E38';
 const bodyColor = '#45B528';
 const appleColor = 'red';
+const SQUARED_STYLE = 'squared';
+const ROUNDED_STYLE = 'rounded';
+
+let style = ROUNDED_STYLE;
+
+function drawSquare(p) {
+    ctx.fillRect(p[0]*SLOT[0], p[1]*SLOT[1], SLOT[0], SLOT[1])
+}
+
+function drawCircle(p) {
+    ctx.beginPath();
+    ctx.arc(
+        p[0] * SLOT[0] + SLOT[0] / 2,
+        p[1] * SLOT[1] + SLOT[1] / 2,
+        SLOT[0] / 2,
+        0,
+        2 * Math.PI,
+        false
+    );
+    ctx.fill();
+}
 
 function draw(color) {
     return function squares(positions) {
         for( const p of positions) {
             ctx.fillStyle = color;
-            ctx.fillRect(p[0]*SLOT[0], p[1]*SLOT[1], SLOT[0], SLOT[1])
+            if (style === SQUARED_STYLE) {
+                drawSquare(p);
+            } else {
+                drawCircle(p);
+            }
         }
     }
 }
@@ -47,11 +72,11 @@ const drawGameState = compose(
 );
 
 function drawCrash() {
-    clearCanvas();
-    ctx.fillStyle = 'black';
+    // clearCanvas();
+    ctx.fillStyle = '#fff7';
     ctx.fillRect(0,0, canvas.width, canvas.width);
 
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = 'black';
     ctx.font = '48px serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -67,3 +92,7 @@ export const drawFrame = branch(
     drawCrash,
     drawGameState
 );
+
+export function setStyle(st = ROUNDED_STYLE) {
+    style = st;
+};

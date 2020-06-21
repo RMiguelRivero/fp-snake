@@ -54,7 +54,7 @@ const snakeNeck = compose(
 );
 const apples = prop('apples');
 const move = prop('move');
-const score = prop('score');
+export const score = prop('score');
 const gameOver = prop('gameOver');
 const backToBoard = modPoint(BOARD_DIMENSIONS[0], BOARD_DIMENSIONS[1]);
 
@@ -79,7 +79,7 @@ const nextHead = compose(
     )
 );
 
-const willCrash = gather(
+export const willCrash = gather(
     includesPoint,
     snake,
     nextHead,
@@ -102,11 +102,9 @@ const moveSnake = compose(
     growSnake,
 );
 
-const emptySnake = constant([]);
-
 const nextSnake = branch(
     willCrash,
-    emptySnake,
+    snake,
     branch(
         willEat,
         growSnake,
@@ -129,11 +127,7 @@ const nextScore = branch(
     score,
 );
 
-export const nextGameOver = branch(
-    willCrash,
-    True,
-    False,
-);
+const nextGameOver = willCrash;
 
 export const isGameOver = gameOver;
 
