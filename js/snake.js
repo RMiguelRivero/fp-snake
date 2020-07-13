@@ -79,9 +79,16 @@ const nextHead = compose(
     )
 );
 
+const snakePortionToCheck = compose(
+    dropLast,  // do not check neck
+    dropLast,  // do not check head
+    dropFirst, // do not check tail
+    snake,
+);
+
 export const willCrash = gather(
     includesPoint,
-    snake,
+    snakePortionToCheck,
     nextHead,
 );
 
