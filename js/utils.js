@@ -2,8 +2,6 @@ export const randomInt = (min = 0, max = 1) => Math.floor(Math.random() * (max -
 export const not = (x) => !x;
 
 export const id = (x) => x;
-export const True = () => true;
-export const False = () => false;
 export const compose = (...fns) => (x) => fns.reduceRight((acc, f) => f(acc), x);
 export const tap = (fn) => (obj) => (fn(obj), obj);
 export const log = (key, parse = id) => obj => (console.log({ [key]: parse(obj)}), obj);
@@ -31,6 +29,3 @@ export const branch = (predicate, f, g = id) => (x) => predicate(x) ? f(x) : g(x
 export const gather = (f, g, h) => (x) => f(g(x))(h(x)); // => f(g(x), h(x))
 export const applySpec = (obj) => (...args) =>
     Object.entries(obj).reduce((acc, [key, fn]) => Object.assign(acc, { [key]: fn(...args) }), {} );
-export const evolve = (transformation) => (data) =>
-    Object.entries(transformation).reduce((acc, [k, fn]) => Object.assign(acc, { [k]: fn(data[k]) }), {});
-

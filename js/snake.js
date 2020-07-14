@@ -12,13 +12,10 @@ import {
     last,
     push,
     branch,
-    id,
     increment,
     dropLast,
     not,
     diffPoints,
-    True,
-    False,
 } from './utils.js';
 
 const randomInBoard = () => [
@@ -59,12 +56,10 @@ const gameOver = prop('gameOver');
 const backToBoard = modPoint(BOARD_DIMENSIONS[0], BOARD_DIMENSIONS[1]);
 
 const spawnApple = (state) => {
-    let newApple = randomInBoard();
-    const isInSnake = includesPoint(state.snake);
-    while(isInSnake(newApple)){
-        newApple = randomInBoard();
-    }
-    return [newApple];
+    const newApple = randomInBoard();
+    return includesPoint(state.snake)(newApple)
+        ? spawnApple(state)
+        : [newApple];
 };
 
 const nextHead = compose(
